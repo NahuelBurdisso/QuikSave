@@ -1,4 +1,4 @@
-import { Microphone, Pause } from "@phosphor-icons/react";
+import { Broom, Download, Microphone, Pause } from "@phosphor-icons/react";
 import Button from "./shared/Button";
 import { FC, useEffect, useRef, useState } from "react";
 import moment from "moment";
@@ -9,8 +9,11 @@ const RecordingSection: FC = () => {
   const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array());
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState<Date>(new Date(0));
+  const [uploadedAudio, setUploadedAudio] = useState<Blob | null>(null);
+  const [size, setSize] = useState(0); // In MB
   const mediaRecorder = useRef<MediaRecorder | null>(null);
 
+  console.log(uploadedAudio);
   useEffect(() => {
     if (isRecording) {
       const interval = setInterval(() => {
@@ -36,6 +39,14 @@ const RecordingSection: FC = () => {
           mediaRecorder.current.addEventListener("dataavailable", (event) => {
             audioChunks.push(event.data);
 
+            // Calculate the total size of all chunks
+            const totalSize = audioChunks.reduce(
+              (total, chunk) => total + chunk.size,
+              0
+            );
+            const sizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
+            setSize(parseFloat(sizeInMB));
+
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteTimeDomainData(dataArray);
@@ -54,24 +65,35 @@ const RecordingSection: FC = () => {
 
   const startRecording = () => {
     setIsRecording(true);
-    setRecordingTime(new Date(0));
   };
 
   const stopRecording = () => {
     if (mediaRecorder.current) {
       mediaRecorder.current.stop();
       setIsRecording(false);
-      setRecordingTime(new Date(0));
 
       // Stop the media stream
       mediaRecorder.current.stream.getTracks().forEach((track) => {
         track.stop();
+        // get blob from the track media
+        const blob = new Blob([audioData], { type: "audio/wav" });
+        setUploadedAudio(blob);
       });
     }
   };
 
+  const saveToFileSystem = () => {
+    if (uploadedAudio) {
+      const url = URL.createObjectURL(uploadedAudio);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "audio.wav";
+      a.click();
+    }
+  };
+
   return (
-    <div className="w-full flex flex-col items-center justify-center mt-24">
+    <div className="w-full flex flex-col items-center justify-center mt-20">
       <Button
         onClick={() => {
           if (isRecording) {
@@ -96,15 +118,39 @@ const RecordingSection: FC = () => {
       </Button>
       <AudioWaveForm
         audioData={audioData}
-        height={150}
+        height={100}
         width={600}
         isRecording={isRecording}
       />
-      <div className="text-blue-800 text-center mb-6">
-        <span className="text-2xl font-semibold">
-          {moment(recordingTime).format("mm:ss")}
-        </span>
+      <div className="text-blue-800 text-center mb-6 text-2xl font-semibold">
+        <span>{moment(recordingTime).format("mm:ss")}</span>
+        <span> / </span>
+        <span>{size} MB</span>
       </div>
+      {uploadedAudio && (
+        <div className="flex items-center justify-center w-full space-x-4 py-4">
+          <Button
+            className="bg-blue-300 hover:bg-blue-400 text-blue-900 rounded-md px-4 py-2 space-x-2"
+            onClick={() => {
+              setUploadedAudio(null);
+              setSize(0);
+              setRecordingTime(new Date(0));
+            }}
+          >
+            <Broom size={18}></Broom>
+            <span>Clear</span>
+          </Button>
+          <Button
+            className="bg-blue-800 hover:bg-blue-900 text-blue-100 rounded-md px-4 py-2 space-x-2"
+            onClick={() => {
+              saveToFileSystem();
+            }}
+          >
+            <Download size={18}></Download>
+            <span>Save</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
