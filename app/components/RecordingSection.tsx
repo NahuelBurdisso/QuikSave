@@ -71,7 +71,7 @@ const RecordingSection: FC = () => {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center">
+    <div className="w-full flex flex-col items-center justify-center mt-24">
       <Button
         onClick={() => {
           if (isRecording) {
@@ -80,7 +80,7 @@ const RecordingSection: FC = () => {
             startRecording();
           }
         }}
-        className="relative mb-16"
+        className="relative mb-12"
       >
         {isRecording ? (
           <Pause color="#1b2e75" size={60} />
@@ -89,7 +89,7 @@ const RecordingSection: FC = () => {
         )}
         <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
           {isRecording && (
-            <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-800 opacity-75 " />
+            <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-800 opacity-75" />
           )}
           <div className="absolute inline-flex rounded-full h-32 w-32 border-4 border-blue-800 hover:bg-purple-600/20" />
         </div>

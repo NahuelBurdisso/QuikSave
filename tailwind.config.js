@@ -11,6 +11,7 @@ export default {
   fontFamily: {
     inter: ["Inter", "sans-serif"],
     mono: ["Inter", "monospace"],
+    lato: ["Lato", "sans-serif"],
   },
   theme: {
     colors: {
